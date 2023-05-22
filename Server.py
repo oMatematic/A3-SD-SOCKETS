@@ -57,3 +57,6 @@ while a > 1:
 
 print("Encerrando o servidor...")
 servidor.close()
+
+
+

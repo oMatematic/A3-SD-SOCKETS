@@ -15,8 +15,8 @@ def main():
 		try:
 			cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			cliente.connect((HOST, PORT))
-			mensagem=""
 			print("... Vou manda uma mensagem para o servidor")
+			mensagem=""
 			while (mensagem != "fim"):
 					# Enviando mensagem ao servidorf
 				
@@ -28,7 +28,6 @@ def main():
 
 					# exibindo resposta
 				print("... >>> O servidor me respondeu:", resposta.decode("utf-8"))
-				
 
 			print("Encerrando o cliente")
 			cliente.close()
@@ -36,7 +35,7 @@ def main():
 		except:
 			print('Servidor indisponível')
 			print('Tentando novamente em alguns segundos')
-			time.sleep(5)
+			time.sleep(2)
 
 if __name__ == "__main__":
     main()
