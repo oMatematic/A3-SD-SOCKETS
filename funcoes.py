@@ -18,5 +18,6 @@ def Vendedor_CadastrarVenda(con):
             print(valor)
         except:
              con.send("Erro! insira uma configuração de moeda válida. Ex: 19.00".encode("utf-8"))
-    CadastrarVenda(nome,valor)
-    con.send("Venda Salva com Sucesso!".encode("utf-8"))
+    resposta=CadastrarVenda(nome,valor)
+    con.send(resposta.encode("utf-8"))
+    con.send('fim'.encode("utf-8"))

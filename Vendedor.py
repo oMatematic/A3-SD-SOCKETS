@@ -1,11 +1,11 @@
 import socket
 import time
+from banco import *
 print("Eu sou um CLIENTE 2!")
 
-# importando a biblioteca
-
-# definindo ip e porta
-HOST = '192.168.20.105'
+redes=ConsultarIps()
+print(redes[0][1])
+HOST = redes[0][1]
 PORT = 9999
 
 
@@ -16,20 +16,25 @@ def main():
 			cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			cliente.connect((HOST, PORT))
 			mensagem=""
-			print("... Vou manda uma mensagem para o servidor")
+			primeira=True
 			while (mensagem != "fim"):
 					# Enviando mensagem ao servidorf
+				if primeira:
+					print("...Iniciando interação com o Servidor")
+					cliente.sendall("vendedor".encode("utf-8"))
+					primeira=False
+					resposta = cliente.recv(1024)
+					# print("... >>> O servidor me respondeu:", resposta.decode("utf-8"))
 				
+				print("... >>> O servidor me respondeu:", resposta.decode("utf-8"))
 				mensagem = input("Mensagem > ")
 				cliente.sendall(mensagem.encode("utf-8"))
 
 					# Recebendo resposta do servidor
 				resposta = cliente.recv(1024)
-
-					# exibindo resposta
-				print("... >>> O servidor me respondeu:", resposta.decode("utf-8"))
+				if resposta.decode("utf-8")=="fim":
+					mensagem=resposta
 				
-
 			print("Encerrando o cliente")
 			cliente.close()
 

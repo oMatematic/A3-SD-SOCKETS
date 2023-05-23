@@ -1,43 +1,47 @@
-# ------------------
-# Cliente Socket UDP GERENTE
-# ------------------
-
-
+import socket
+import time
 print("Eu sou um Gerente")
 
-# Importando a biblioteca
-import socket
+# importando a biblioteca
+
+# definindo ip e porta
+HOST = '192.168.20.105'
+PORT = 9999
 
 
-# Definindo ip e porta
-HOST = '10.190.32.155'        # Substituir pelo endereco IP do Servidor
-PORT = 9000              # Porta que o Servidor ficará escutando
 
-# Criando o socket
-cliente = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+def main():
+	while(True):
+		try:
+			cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			cliente.connect((HOST, PORT))
+			mensagem=""
+			primeira=True
+			while (mensagem != "fim"):
+					# Enviando mensagem ao servidorf
+				if primeira:
+					cliente.sendall("gerente".encode("utf-8"))
+					primeira=False
+				print("... Vou manda uma mensagem para o servidor")
+				resposta = cliente.recv(1024)
+				print("... >>> O servidor me respondeu:", resposta.decode("utf-8"))
+				mensagem = input("Mensagem > ")
+				cliente.sendall(mensagem.encode("utf-8"))
 
-# Define o endereco do servidor (Ip e porta)
-enderecoServidor = (HOST, PORT)
+					# Recebendo resposta do servidor
+				resposta = cliente.recv(1024)
 
-print("Vou começar a mandar mensagens para o servidor.")
+					# exibindo resposta
+				
+				
 
-# Aqui começa a conversa		
-print("Entrando com mensagem de texto para enviar")
-print("(Para sair digite 'fim')")
-mensagem = input("Mensagem > ")
-mensagem="2"+mensagem
-while (mensagem != "fim"):
-	# Enviando mensagem ao servidor
-	print("... Vou mandar uma mensagem para o servidor")
-	cliente.sendto(mensagem.encode("utf-8"), enderecoServidor)
+			print("Encerrando o cliente")
+			cliente.close()
 
-	# Recebendo resposta do servidor
-	msg, endereco = cliente.recvfrom(9000)
-	print("... O servidor me respondeu:", msg.decode("utf-8"))
+		except:
+			print('Servidor indisponível')
+			print('Tentando novamente em alguns segundos')
+			time.sleep(5)
 
-	# Obtendo nova mensagem do usuário
-	print("... Entrando com nova mensagem de texto para enviar")
-	mensagem = input("Mensagem > ")
-	mensagem="2"+mensagem
-print("... Encerrando o cliente")
-cliente.close()
+if __name__ == "__main__":
+    main()

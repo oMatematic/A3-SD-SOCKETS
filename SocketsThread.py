@@ -14,21 +14,44 @@ def conexao( conexao, enderecoCliente):
 
     print(f"[NOVO USUARIO CONECTADO] {enderecoCliente} conectou.")
     conectado=True
+    status=""
+    opcao=""
     while conectado:
+        try:
+            msg=conexao.recv(tamanho).decode(padrao)
+            if msg =="gerente":
+                conexao.sendall("\n\n     [Painel de Gerencia] \n Escolha uma das Funções Abaixo: \n 1 - Listar Vendas \n 2 - Listar Vendedores\n 3 - Vendas de Vendedor Especifico ".encode("utf-8"))
+                status=msg
+                opcao=conexao.recv(tamanho).decode(padrao)
+                if opcao=='1':
+                    conexao.send('opcao 1'.encode(padrao))
+                elif opcao=='2':
+                    conexao.send('opcao 2'.encode(padrao))
+                elif opcao=='3':
+                    conexao.send('opcao 3'.encode(padrao))
+                else:
+                    conexao.send('opcao invalida'.encode(padrao))
+            elif msg=="vendedor":
+                conexao.send("[Painel de Vendas] \n Escolha uma das Funções Abaixo: \n 1 - Registrar Venda \n 2 - Listar Vendas\n 3 - Vendas de Vendedor Especifico ".encode("utf-8"))
+                status=msg
+                opcao=conexao.recv(tamanho).decode(padrao)
+                if opcao=='1':
+                    Vendedor_CadastrarVenda( conexao)
+                elif opcao=='2':
+                    conexao.send('opcao 2'.encode(padrao))
+                elif opcao=='3':
+                    conexao.send('opcao 3'.encode(padrao))
+                else:
+                    conexao.send('opcao invalida'.encode(padrao))
 
-        msg=conexao.recv(tamanho).decode(padrao)
-        if msg == opc_sair:
-            conectado= False
-        if msg =='1':
-            Vendedor_CadastrarVenda( conexao)
-
-        print(f"[{enderecoCliente}] {msg}")
-        msg="receba"
-        conexao.send(msg.encode(padrao))
-
+           
+        except:
+            next
+            conectado=False
+           
 
     conexao.close()
-    conexao.thread.exit()
+    
 
 def main():
 
@@ -51,7 +74,7 @@ def main():
         conn, endereco=servidor.accept()
         thread=threading.Thread(target=conexao, args=( conn, endereco) )
         thread.start()
-        print(f"usuarios ativos {threading.active_count()-1}")
+        print(f"usuarios ativos {threading.active_count()-1} ")
 
 
 
