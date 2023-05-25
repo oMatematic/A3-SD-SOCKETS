@@ -38,7 +38,7 @@ def conexao( conexao, enderecoCliente):
                 if opcao=='1':
                     Vendedor_CadastrarVenda( conexao)
                 elif opcao=='2':
-                    conexao.send('opcao 2'.encode(padrao))
+                    Vendedor_ListarVenda(conexao)
                 elif opcao=='3':
                     conexao.send('opcao 3'.encode(padrao))
                 else:
@@ -60,11 +60,12 @@ def main():
     ip_local = socket.gethostbyname(socket.gethostname())
     print(f'IP Local: {ip_local}')
     print('seu ip local será usado para ancoragem do servidor atual')
+    SetarIP('secondary','0.0.0.0','inativo')
     SetarIP('primary',ip_local,'ativo')
     print(ConsultarIps())
 
     HOST = ip_local        # Endereco IP do Servidor
-    PORT = 9999            # Porta que o Servidor esta
+    PORT = 9998            # Porta que o Servidor esta
     servidor = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     servidor.bind((HOST,PORT))
     servidor.listen(1)

@@ -21,3 +21,17 @@ def Vendedor_CadastrarVenda(con):
     resposta=CadastrarVenda(nome,valor)
     con.send(resposta.encode("utf-8"))
     con.send('fim'.encode("utf-8"))
+
+
+def Vendedor_ListarVenda(con):
+    con.send("Informe Seu nome".encode("utf-8"))
+    nome=str(con.recv(1024));
+    print(type(nome))
+    nome=nome[1:]
+    nome=re.sub("[']",'',nome)
+
+    print(nome)
+    vendas=ListarVendas(nome)
+    resposta= f"O valor total de vendas de {nome} foi de R$ {vendas:.2f}"
+    con.send(resposta.encode("utf-8"))
+    con.send('fim'.encode("utf-8"))

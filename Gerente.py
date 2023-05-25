@@ -1,5 +1,8 @@
 import socket
+import threading
+from banco import *
 import time
+from funcoes import *
 print("Eu sou um Gerente")
 
 # importando a biblioteca
@@ -13,6 +16,15 @@ PORT = 9999
 def main():
 	while(True):
 		try:
+			redes=ConsultarIps()
+
+
+			print(redes[0][2])
+			HOST = redes[0][1]
+			PORT = 9999
+
+
+
 			cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			cliente.connect((HOST, PORT))
 			mensagem=""
