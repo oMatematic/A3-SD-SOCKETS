@@ -59,9 +59,9 @@ def CadastrarVenda(vendedor, valor):
         cursor.close()
         banco.close()
 
-        return "Venda Salva com sucesso!"
+        return "Venda Salva com sucesso! fim"
     except:
-        return "Falha ao Salvar venda!"
+        return "Falha ao Salvar venda! fim"
     
 def ListarVendas(vendedor):
     vendas=[]
