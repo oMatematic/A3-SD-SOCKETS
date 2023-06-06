@@ -34,6 +34,9 @@ def Vendedor_ListarVenda(con):
 
     print(nome)
     vendas = ListarVendas(nome)
-    resposta = f"O valor total de vendas de {nome} foi de R$ {vendas:.2f}"
+    if vendas[0]==None:
+        resposta="Vendedor encontrado!"
+    else:
+        resposta = f"O valor total de vendas de {nome} foi de R$ {vendas:.2f}"
     con.send(resposta.encode("utf-8"))
     con.send('fim'.encode("utf-8"))

@@ -22,7 +22,7 @@ def conexao(conexao, enderecoCliente):
             msg = conexao.recv(tamanho).decode(padrao)
             if msg == "gerente":
                 conexao.sendall(
-                    "[Painel de Gerencia] \n Escolha uma das Funções Abaixo: \n 1 - Listar Vendas \n 2 - Listar Vendedores\n 3 - Vendas de Vendedor Especifico ".encode("utf-8"))
+                    "[Painel de Gerencia] \n Escolha uma das Funções Abaixo: \n 1 - Listar Vendas \n 2 - Listar Vendedores\n 3 - Vendas de Vendedor Especifico ".encode(padrao))
                 status = msg
                 opcao = conexao.recv(tamanho).decode(padrao)
                 if opcao == '1':
@@ -35,15 +35,13 @@ def conexao(conexao, enderecoCliente):
                     conexao.send('opcao invalida'.encode(padrao))
             elif msg == "vendedor":
                 conexao.send(
-                    "\n [       Painel de Vendas       ] \n Escolha uma das Funções Abaixo: \n 1 - Registrar Venda \n 2 - Listar Vendas\n 3 - Vendas de Vendedor Especifico ".encode("utf-8"))
+                    "\n [       Painel de Vendas       ] \n Escolha uma das Funções Abaixo: \n 1 - Registrar Venda \n 2 - Listar Vendas".encode("utf-8"))
                 status = msg
                 opcao = conexao.recv(tamanho).decode(padrao)
                 if opcao == '1':
                     Vendedor_CadastrarVenda(conexao)
                 elif opcao == '2':
                     Vendedor_ListarVenda(conexao)
-                elif opcao == '3':
-                    conexao.send('opcao 3'.encode(padrao))
                 else:
                     conexao.send('Opção inválida'.encode(padrao))
 
@@ -60,8 +58,8 @@ def main():
     ip_local = socket.gethostbyname(socket.gethostname())
     print(f'IP Local: {ip_local}')
     print('seu ip local será usado para ancoragem do servidor atual')
-    SetarIP('secondary', '0.0.0.0', 'inativo')
-    SetarIP('primary', ip_local, 'ativo')
+    SetarIP('secondary', '0.0.0.0','0000', 'inativo')
+    SetarIP('primary', ip_local,'9998', 'ativo')
     print(ConsultarIps())
 
     HOST = ip_local        # Endereco IP do Servidor

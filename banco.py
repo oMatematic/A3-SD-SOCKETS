@@ -12,19 +12,19 @@ def __init__():
         cursor.execute("CREATE TABLE vendas (vendedor text,valor decimal)")
         cursor.execute("CREATE TABLE conexao (tipo text, ip text,port text, status text)")
         cursor.execute("INSERT INTO conexao VALUES('primary','0.0.0.0','9998', 'inativo')")
-        cursor.execute("INSERT INTO conexao VALUES('secondary','1.1.1.1','9999','inativo')")
+        cursor.execute("INSERT INTO conexao VALUES('secondary','1.1.1.1','0000','inativo')")
         banco.commit()
         cursor.close()
         banco.close()
     except:
         next
 
-def SetarIP(tipo,ip, status):
+def SetarIP(tipo,ip,port, status):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(BASE_DIR, "referencias.db")
     banco = sqlite3.connect(db_path)
     cursor = banco.cursor()
-    cursor.execute("UPDATE conexao SET ip ='"+ip+"' , status= '"+status+"' where tipo='"+tipo+"' ")
+    cursor.execute("UPDATE conexao SET ip ='"+ip+"' , port= '"+port+"' , status= '"+status+"' where tipo='"+tipo+"' ")
     banco.commit()
     cursor.close()
     banco.close()
@@ -64,13 +64,13 @@ def CadastrarVenda(vendedor, valor):
         return "Falha ao Salvar venda! fim"
     
 def ListarVendas(vendedor):
-    vendas=[]
+    vendas='usuario não encontrado'
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(BASE_DIR, "referencias.db")
     banco = sqlite3.connect(db_path)
     cursor = banco.cursor()
     cursor.execute("select SUM(valor) from vendas where vendedor ='"+vendedor+"' ")
-    vendas=cursor.fetchone()[0]
+    vendas=cursor.fetchone()
     banco.commit()
     cursor.close()
     banco.close()
