@@ -42,11 +42,15 @@ def IniciarEleicao():
         PORT=9998
     # indicacao=int((random.randint(1, 100)*random.randint(1, 100))/random.randint(1, 100))
     indicacao=10
-    global trava
-    trava=PORT+1
+    global inicio
+    global ProxNo 
+    unico=False
+    ProxNo=""
+    inicio=PORT+1
     first=True
     isHost=False
     conectado=True
+
     for i in range(qtd-1):
         if not conectado:
             break
@@ -65,51 +69,80 @@ def IniciarEleicao():
             while conectado:
                 print('AINDA CONECTADO')
                 
-                if PORT==trava and first:
+                if PORT==inicio and first:
                     print('sou o primeiro vou mandar meu voto')
                     first=False
-                    enviar_mensagem((HOST,PORT+1), indicacao+2,qtd)
+                    ProxNo=enviar_mensagem((HOST,PORT+1), indicacao+2,qtd,inicio,1)
                     # thread = threading.Thread(target=enviar_mensagem, args=((HOST,PORT+1), indicacao,qtd))
                     # thread.start()
+                    
                     indicacao+=2
                 if i== qtd:
                     PORT-(qtd+1)
                 print(PORT)
+                if PORT == endereco_destino[1]:
+                    print("[AVISO] Sou o unico na eleição")
+                    ip,port=endereco_destino
+                    SetarIP('secondary',ip,str(port),'ativo')
+                    conectado=False
+                    isHost=True
+                    servidor.close()
+                    break
+                if not unico:
+                    conn, endereco = servidor.accept()
+                    print(endereco)
+                    msg = conn.recv(tamanho).decode(padrao)
+                    conn.sendall('ok'.encode(padrao))
                 
-                conn, endereco = servidor.accept()
-                print(endereco)
-                msg = conn.recv(tamanho).decode(padrao)
-                conn.sendall('ok'.encode(padrao))
                 # if not first and msg<indicacao:
                 #     enviar_mensagem((HOST,PORT+1), indicacao,qtd)
                 #     # thread = threading.Thread(target=enviar_mensagem, args=((HOST,PORT+1), indicacao,qtd))
                 #     # thread.start()
+                
+
                 try:
                     if  int(msg)<indicacao:
-                        enviar_mensagem((HOST,PORT+1), indicacao,qtd)
+                        if ProxNo=="":
+                            print("meu numero é maior")
+                            ProxNo=enviar_mensagem((HOST,PORT+1), indicacao,qtd,inicio,1)
+                        else:
+                            print("meu numero é maior")
+                            enviar_mensagem((HOST,int(ProxNo)), indicacao,qtd,inicio,2)
                     elif int(msg)==indicacao:
-                        enviar_aviso(endereco_destino,qtd)
+
+                        enviar_aviso(endereco_destino,qtd,ProxNo)
                         ip,port=endereco_destino
                         SetarIP('secondary',ip,str(port),'ativo')
                         conectado=False
                         isHost=True
+                        conn.close()
+                        servidor.close()
                         break
                     else:
-                        enviar_mensagem((HOST,PORT+1), msg,qtd)
+                        if ProxNo=="": 
+                            print("meu numero é menor")
+                            ProxNo=enviar_mensagem((HOST,PORT+1), msg,qtd,inicio,1)
                         # thread = threading.Thread(target=enviar_mensagem, args=((HOST,PORT+1), indicacao,qtd))
                         # thread.start()
+                        else:
+                            print("meu numero é menor")
+                            enviar_mensagem((HOST,ProxNo), msg,qtd,inicio,2)
                 except:
+                    conn.close()
+                    servidor.close()
                     print("eleicao encerrada")
                     print('Caminho do novo servidor', msg)
                     msg=msg.replace("(", "").replace(")", "")
                     NewServer=msg.split(',')
                     print(NewServer)
-                    ip,host=NewServer
-                    SetarIP('secondary',str(ip),str(host),'ativo')
+                    ip,port=NewServer
+
                     print('Conectando ao novo Servidor')
-                   
+                    conectado=False
                     break
-                
+                if ProxNo==PORT:
+                    ProxNo=""
+               
                     
         except:
             next
@@ -117,7 +150,7 @@ def IniciarEleicao():
     if isHost:
         serverReserva(ip,port)
     else:
-        main()
+        main(ip,port)
     #transmitir mensagem
 
     #aguardar mensagem
@@ -130,43 +163,85 @@ def IniciarEleicao():
 
 
 
-def enviar_mensagem(no_destino, mensagem,pcs):
-    margem=int(no_destino[1])-(trava+1)
-    time.sleep(3)
-    for i in range (pcs-1):
+def enviar_mensagem(no_destino, mensagem,pcs,PortIinicial,operacao):
+    PORT=no_destino[1]
+    no_destino=no_destino[0], PORT
+    contador=0
+    if operacao==1:
         
-        print(no_destino[1])
-        try:
-            endereco_destino = (no_destino)  # Endereço do próximo nó
-            mensagem_serializada = str(mensagem)
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect(endereco_destino)
-                print('Conectei')
-                s.sendall(mensagem_serializada.encode(padrao))
-                print('Enviei')
-                resposta=s.recv(1024).decode(padrao)
-                if resposta=="ok":
-                    print("AAAAAAA")
-                    break
-        except:
-       
-            if i==(pcs-(margem+1)):
+     
+        for i in range (pcs):
+            
+           
+            while contador<3:
+                try:
+                    endereco_destino = (no_destino)  # Endereço do próximo nó
+                    mensagem_serializada = str(mensagem)
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                        print("[Conectando] Tentando Ancoragem")
+                        s.connect(endereco_destino)
+                        print('[Conectado] Ancorado, vou enviar meu voto')
+                        s.sendall(mensagem_serializada.encode(padrao))
+                        print('[Enviado] Voto enviado com sucesso!')
+                        resposta=s.recv(1024).decode(padrao)
+                        if resposta=="ok":
+                            print("Confirmação de voto recebida")
+                            return PORT
+                except:
+                    time.sleep(1)
+                    print(f"[ERRO] Porta {no_destino[1]} sem resposta, tentando Novamente")
+
+                    contador+=1
+            
+        
+            
+            if PORT==(PortIinicial+pcs):
+                print(f'[SEM CONEXÃO] Porta  {no_destino[1]} sem Retorno, tentando em outra porta')
                 PORT=no_destino[1]
-                PORT-=(pcs-1)
+                PORT-=(pcs)
                 no_destino=no_destino[0], PORT
+                contador=0
+                
             else:
+                contador=0
+                print(f"[SEM CONEXÃO] Porta {no_destino[1]} sem retorno, tentando em outra porta")
                 PORT=no_destino[1]
                 PORT+=1
                 no_destino=no_destino[0], PORT
-                print('erro sem retorno')
-            next
+     
+    else:
+        
 
-def enviar_aviso(servidor,pcs):
-    margem=int(servidor[1])-(trava+1)
+        while contador<3:
+                try:
+                    endereco_destino = (no_destino)  # Endereço do próximo nó
+                    mensagem_serializada = str(mensagem)
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                        print("[Conectando] Tentando Ancoragem")
+                        s.connect(endereco_destino)
+                        print('[Conectado] Ancorado, vou enviar meu voto')
+                        s.sendall(mensagem_serializada.encode(padrao))
+                        print('[Enviado] Voto enviado com sucesso!')
+                        resposta=s.recv(1024).decode(padrao)
+                        if resposta=="ok":
+                            print("Confirmação de voto recebida")
+                            break
+                except:
+                    time.sleep(1)
+                    print(f"[ERRO] Porta {no_destino[1]} sem resposta, tentando Novamente")
+
+                    contador+=1    
+        print("[Erro] Sem retorno, voltaremos a varredura ")
+        enviar_mensagem(no_destino, mensagem,pcs,1)   
+    
+    return PORT
+
+def enviar_aviso(servidor,pcs,proxNo):
+    margem=int(servidor[1])-(inicio+1)
     HOST,PORT=servidor
-    time.sleep(10)
+    time.sleep(1)
     Vencedor=HOST,PORT
-    servidor= HOST,(PORT+1)
+    servidor= HOST,proxNo
     for i in range (pcs-1):
         
         print(servidor[1])
@@ -260,11 +335,17 @@ def serverReserva(ip,port):
     print(ConsultarIps())
 
     HOST = ip        # Endereco IP do Servidor
-    PORT = str(port)            # Porta que o Servidor esta
+    PORT = port          # Porta que o Servidor esta
     servidor = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    servidor.bind((HOST,PORT))
-    servidor.listen(1)
-    print(f"[ATIVO] O Servidor está Ativo no: {ip}:{PORT}")
+    a=0
+    while a==0: 
+        try:
+            servidor.bind((HOST,PORT))
+            servidor.listen(1)
+            print(f"[ATIVO] O Servidor está Ativo no: {ip}:{PORT}")
+            a=1
+        except:
+            next
 
     while(True):
         conn, endereco=servidor.accept()
@@ -274,16 +355,22 @@ def serverReserva(ip,port):
 
 
 
-def main():
+def main(ip=None,port=0):
+    
     contador = 0
     while True:
         
 
         try:
-            redes = ConsultarIps()
-            print(redes[0][3])
-            HOST = redes[0][1]
-            PORT = int(redes[0][2])
+            if not ip ==None :
+                ip.replace("(", "").replace(")", "")
+                HOST=ip.replace("'", "").replace(")", "")
+                PORT=int(port)
+            else:
+                redes = ConsultarIps()
+                print(redes[0][3])
+                HOST = redes[0][1]
+                PORT = int(redes[0][2])
             cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             cliente.connect((HOST, PORT))
             mensagem = ""
@@ -319,7 +406,7 @@ def main():
         except:
             print('Servidor indisponível')
             print('Tentando novamente em alguns segundos')
-            time.sleep(5)
+            time.sleep(1.5)
             contador += 1
 
         if contador > 2:
