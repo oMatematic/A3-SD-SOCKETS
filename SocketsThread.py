@@ -51,14 +51,35 @@ def conexao(conexao, enderecoCliente):
 
     conexao.close()
 
-
+def enviar_ordem(host,port):
+     
+    try:
+        endereco_destino = ((host,port))  # Endereço do próximo nó
+        mensagem_serializada = 'voltei'
+        for i in range(2):
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect(endereco_destino)
+                print('Conectei para enviar o aviso')
+                s.sendall(mensagem_serializada.encode(padrao))
+                print('Enviei o aviso')
+                resposta=s.recv(1024).decode(padrao)
+    except:
+        next
+            
 def main():
+
+    redes = ConsultarIps()
+    if  redes[0][0] == 'secondary':
+        print(redes[0][3])
+        HOST = redes[0][1]
+        PORT = int(redes[0][2])
+        print(ConsultarIps())
+        enviar_ordem(HOST,PORT)
 
     print("[INICIANDO] O Servidor está Iniciando...")
     ip_local = socket.gethostbyname(socket.gethostname())
     print(f'IP Local: {ip_local}')
     print('seu ip local será usado para ancoragem do servidor atual')
-    SetarIP('secondary', '0.0.0.0','0000', 'inativo')
     SetarIP('primary', ip_local,'9998', 'ativo')
     print(ConsultarIps())
 

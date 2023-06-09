@@ -13,6 +13,8 @@ from funcoes import *
 tamanho = 1024
 padrao = "utf-8"
 opc_sair = "!SAIR"
+global sinal
+sinal=False
 
 
 
@@ -290,6 +292,14 @@ def conexao( conexao, enderecoCliente):
     while conectado:
         try:
             msg=conexao.recv(tamanho).decode(padrao)
+            if msg=="voltei":
+                
+                conectado=False
+               
+                global sinal
+                sinal=True
+            
+                break
             if msg =="gerente":
                 conexao.sendall("\n\n     [Painel de Gerencia] \n Escolha uma das Funções Abaixo: \n 1 - Listar Vendas \n 2 - Listar Vendedores\n 3 - Vendas de Vendedor Especifico ".encode("utf-8"))
                 status=msg
@@ -319,14 +329,17 @@ def conexao( conexao, enderecoCliente):
         except:
             next
             conectado=False
+            conexao.close()
+    
            
 
     conexao.close()
     
 
 def serverReserva(ip,port):
-
-
+    global sinal
+    sinal=False
+    ativo=True
     print("[INICIANDO] O Servidor está Iniciando...")
 
     print(f'IP Local: {ip}')
@@ -347,11 +360,25 @@ def serverReserva(ip,port):
         except:
             next
 
-    while(True):
+    while ativo:
+        if  sinal:
+            SetarIP('secondary', '0.0.0.0','0000', 'inativo')
+            ativo=False
+            servidor.close()
+            break
         conn, endereco=servidor.accept()
-        thread=threading.Thread(target=conexao, args=( conn, endereco) )
-        thread.start()
+        thread=threading.Thread(target=conexao, args=( conn, endereco) ).start()
+        print(thread)
+        
         print(f"usuarios ativos {threading.active_count()-1} ")
+        
+        if  sinal:
+            ativo=False
+            SetarIP('secondary', '0.0.0.0','0000', 'inativo')
+            print("[AVISO] O servidor principal está no ar")
+            print("Entrando em modo cliente")
+            servidor.close()
+            break
 
 
 
@@ -410,9 +437,11 @@ def main(ip=None,port=0):
             contador += 1
 
         if contador > 2:
+          
             print("Servidor indisponível, iniciando eleição")
             IniciarEleicao()
-
+            if sinal:
+                contador=0
 
 
 
