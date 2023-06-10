@@ -48,8 +48,9 @@ def conexao(conexao, enderecoCliente):
         except:
             next
             conectado = False
-
-    conexao.close()
+        finally:
+            conexao.close()
+    
 
 def enviar_ordem(host,port):
      

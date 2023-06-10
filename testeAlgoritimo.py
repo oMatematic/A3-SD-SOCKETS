@@ -6,7 +6,7 @@ import threading
 from banco import *
 import time
 from funcoes import *
-
+import re
 
 
 
@@ -15,7 +15,7 @@ padrao = "utf-8"
 opc_sair = "!SAIR"
 global sinal
 sinal=False
-
+global stop
 
 
 
@@ -59,7 +59,11 @@ def IniciarEleicao():
             
         print(i)
         global msg
-        PORT+=  1
+        
+        if (PORT+1)!=inicio:
+            PORT=inicio+qtd-i
+        else:
+            PORT+=1
         endereco_destino = (HOST, PORT)  # Endereço do próximo nó
         print(endereco_destino)
        
@@ -67,84 +71,91 @@ def IniciarEleicao():
             servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             servidor.bind(endereco_destino)
             servidor.listen()
+            
             print('Estou ancorado')
             while conectado:
-                print('AINDA CONECTADO')
-                
-                if PORT==inicio and first:
-                    print('sou o primeiro vou mandar meu voto')
-                    first=False
-                    ProxNo=enviar_mensagem((HOST,PORT+1), indicacao+2,qtd,inicio,1)
-                    # thread = threading.Thread(target=enviar_mensagem, args=((HOST,PORT+1), indicacao,qtd))
-                    # thread.start()
-                    
-                    indicacao+=2
-                if i== qtd:
-                    PORT-(qtd+1)
-                print(PORT)
-                if PORT == endereco_destino[1]:
-                    print("[AVISO] Sou o unico na eleição")
-                    ip,port=endereco_destino
-                    SetarIP('secondary',ip,str(port),'ativo')
-                    conectado=False
-                    isHost=True
-                    servidor.close()
-                    break
-                if not unico:
-                    conn, endereco = servidor.accept()
-                    print(endereco)
-                    msg = conn.recv(tamanho).decode(padrao)
-                    conn.sendall('ok'.encode(padrao))
-                
-                # if not first and msg<indicacao:
-                #     enviar_mensagem((HOST,PORT+1), indicacao,qtd)
-                #     # thread = threading.Thread(target=enviar_mensagem, args=((HOST,PORT+1), indicacao,qtd))
-                #     # thread.start()
-                
-
                 try:
-                    if  int(msg)<indicacao:
-                        if ProxNo=="":
-                            print("meu numero é maior")
-                            ProxNo=enviar_mensagem((HOST,PORT+1), indicacao,qtd,inicio,1)
-                        else:
-                            print("meu numero é maior")
-                            enviar_mensagem((HOST,int(ProxNo)), indicacao,qtd,inicio,2)
-                    elif int(msg)==indicacao:
+                    print('AINDA CONECTADO')
+                    
+                    if PORT==inicio and first:
+                        print('sou o primeiro vou mandar meu voto')
+                        first=False
+                        ProxNo=enviar_mensagem((HOST,PORT+1), indicacao+2,qtd,inicio,1,PORT)
+                        # thread = threading.Thread(target=enviar_mensagem, args=((HOST,PORT+1), indicacao,qtd))
+                        # thread.start()
+                        
+                        indicacao+=2
+                    if PORT != inicio:
+                        servidor.settimeout(300)
 
-                        enviar_aviso(endereco_destino,qtd,ProxNo)
+                    if i== qtd:
+                        PORT-(qtd+1)
+                    
+                    if ProxNo == endereco_destino[1]:
+                        print("[AVISO] Sou o unico na eleição")
                         ip,port=endereco_destino
                         SetarIP('secondary',ip,str(port),'ativo')
                         conectado=False
                         isHost=True
-                        conn.close()
                         servidor.close()
                         break
                     else:
-                        if ProxNo=="": 
-                            print("meu numero é menor")
-                            ProxNo=enviar_mensagem((HOST,PORT+1), msg,qtd,inicio,1)
-                        # thread = threading.Thread(target=enviar_mensagem, args=((HOST,PORT+1), indicacao,qtd))
-                        # thread.start()
-                        else:
-                            print("meu numero é menor")
-                            enviar_mensagem((HOST,ProxNo), msg,qtd,inicio,2)
-                except:
-                    conn.close()
-                    servidor.close()
-                    print("eleicao encerrada")
-                    print('Caminho do novo servidor', msg)
-                    msg=msg.replace("(", "").replace(")", "")
-                    NewServer=msg.split(',')
-                    print(NewServer)
-                    ip,port=NewServer
+                        conn, endereco = servidor.accept()
+                        print(endereco)
+                        msg = conn.recv(tamanho).decode(padrao)
+                        conn.sendall('ok'.encode(padrao))
+                    
+            
 
-                    print('Conectando ao novo Servidor')
+                    try:
+                        if  int(msg)<indicacao:
+                            if ProxNo=="":
+                                print("meu numero é maior")
+                                ProxNo=enviar_mensagem((HOST,inicio+1), indicacao,qtd,inicio,1,PORT)
+                            else:
+                                print("meu numero é maior")
+                                enviar_mensagem((HOST,int(ProxNo)), indicacao,qtd,inicio,2,PORT)
+                        elif int(msg)==indicacao:
+
+                            enviar_aviso(endereco_destino,qtd,ProxNo,PORT)
+                            ip,port=endereco_destino
+                            SetarIP('secondary',ip,str(port),'ativo')
+                            conectado=False
+                            isHost=True
+                            conn.close()
+                            servidor.close()
+                            break
+                        else:
+                            if ProxNo=="": 
+                                print("meu numero é menor")
+                                ProxNo=enviar_mensagem((HOST,inicio+1), msg,qtd,inicio,1,PORT)
+                            # thread = threading.Thread(target=enviar_mensagem, args=((HOST,PORT+1), indicacao,qtd))
+                            # thread.start()
+                            else:
+                                print("meu numero é menor")
+                                enviar_mensagem((HOST,ProxNo), msg,qtd,inicio,2,PORT)
+                    except:
+                        conn.close()
+                       
+                        
+                        print("eleicao encerrada")
+                        print('Caminho do novo servidor', msg)
+                        msg = re.sub(r"[\'\(\)]", "", msg)
+                        NewServer=msg.split(',')
+                        print(NewServer)
+                        ip,port=NewServer
+                        enviar_aviso(NewServer,qtd,ProxNo,PORT)
+                        servidor.close()
+                        print('Conectando ao novo Servidor')
+                        conectado=False
+                        break
+                except socket.timeout:
+                    print("Tempo limite de 30 segundos atingido. Nenhuma conexão foi aceita.")
                     conectado=False
-                    break
-                if ProxNo==PORT:
-                    ProxNo=""
-               
+                    print("não consegui participar da eleição")
+                    servidor.close()
+
+                    
                     
         except:
             next
@@ -152,7 +163,10 @@ def IniciarEleicao():
     if isHost:
         serverReserva(ip,port)
     else:
-        main(ip,port)
+        if port=="":
+            main()
+        else:
+         main(ip,port)
     #transmitir mensagem
 
     #aguardar mensagem
@@ -165,15 +179,25 @@ def IniciarEleicao():
 
 
 
-def enviar_mensagem(no_destino, mensagem,pcs,PortIinicial,operacao):
-    PORT=no_destino[1]
+def enviar_mensagem(no_destino, mensagem,pcs,PortIinicial,operacao, myPort):
+    PORT=myPort+1
     no_destino=no_destino[0], PORT
     contador=0
     if operacao==1:
         
      
-        for i in range (pcs):
-            
+        for i in range (pcs-1):
+            if myPort==(inicio+pcs-1):
+                no_destino=no_destino[0], inicio
+                PORT=inicio
+            if PORT==myPort:
+                if i== (pcs-2):
+                    no_destino=no_destino[0], inicio
+                    PORT=inicio
+                else:
+                    PORT=no_destino[1]
+                    PORT+=1
+                    no_destino=no_destino[0], PORT
            
             while contador<3:
                 try:
@@ -197,13 +221,13 @@ def enviar_mensagem(no_destino, mensagem,pcs,PortIinicial,operacao):
             
         
             
-            if PORT==(PortIinicial+pcs):
+            if PORT==(PortIinicial+(pcs-1)):
                 print(f'[SEM CONEXÃO] Porta  {no_destino[1]} sem Retorno, tentando em outra porta')
                 PORT=no_destino[1]
-                PORT-=(pcs)
+                PORT-=(pcs-1)
                 no_destino=no_destino[0], PORT
                 contador=0
-                
+            
             else:
                 contador=0
                 print(f"[SEM CONEXÃO] Porta {no_destino[1]} sem retorno, tentando em outra porta")
@@ -227,26 +251,36 @@ def enviar_mensagem(no_destino, mensagem,pcs,PortIinicial,operacao):
                         resposta=s.recv(1024).decode(padrao)
                         if resposta=="ok":
                             print("Confirmação de voto recebida")
-                            break
+                            return PORT
                 except:
                     time.sleep(1)
                     print(f"[ERRO] Porta {no_destino[1]} sem resposta, tentando Novamente")
 
                     contador+=1    
         print("[Erro] Sem retorno, voltaremos a varredura ")
-        enviar_mensagem(no_destino, mensagem,pcs,1)   
+        enviar_mensagem(no_destino, mensagem,pcs,1,)   
     
     return PORT
 
-def enviar_aviso(servidor,pcs,proxNo):
-    margem=int(servidor[1])-(inicio+1)
+def enviar_aviso(servidor,pcs,proxNo,myport):
+    
     HOST,PORT=servidor
+    PORT=int(PORT)
     time.sleep(1)
     Vencedor=HOST,PORT
     servidor= HOST,proxNo
     for i in range (pcs-1):
         
-        print(servidor[1])
+         
+        
+        if servidor[1]==myport:
+            if i== (pcs-2):
+                servidor= HOST,(inicio)
+            else:
+                servidor= HOST,(inicio+1)
+        if PORT==servidor[1]:
+            servidor= HOST,(inicio+1)
+        
         try:
             endereco_destino = (servidor)  # Endereço do próximo nó
             mensagem_serializada = str(Vencedor)
@@ -260,16 +294,15 @@ def enviar_aviso(servidor,pcs,proxNo):
                     print("aviso enviado")
                     break
         except:
-       
-            if i==(pcs-(margem+1)):
-                PORT=servidor[1]
-                PORT-=(pcs-1)
-                servidor=servidor[0], PORT
+            print(F'erro sem retorno NA PORT {servidor[1]}')
+            if servidor[1]==(inicio+pcs-1):
+                servidor= HOST,(inicio)
+                
             else:
-                PORT=servidor[1]
-                PORT+=1
-                servidor=servidor[0], PORT
-                print('erro sem retorno')
+               port=servidor[1]
+               servidor= HOST,(port+1) 
+                    
+            
             next
 
 
@@ -289,13 +322,14 @@ def conexao( conexao, enderecoCliente):
     conectado=True
     status=""
     opcao=""
-    while conectado:
+
+    while conectado and not stop:
         try:
             msg=conexao.recv(tamanho).decode(padrao)
             if msg=="voltei":
                 
                 conectado=False
-               
+                conexao.close()
                 global sinal
                 sinal=True
             
@@ -308,12 +342,10 @@ def conexao( conexao, enderecoCliente):
                     conexao.send('opcao 1'.encode(padrao))
                 elif opcao=='2':
                     conexao.send('opcao 2'.encode(padrao))
-                elif opcao=='3':
-                    conexao.send('opcao 3'.encode(padrao))
                 else:
                     conexao.send('opcao invalida'.encode(padrao))
             elif msg=="vendedor":
-                conexao.send("[Painel de Vendas] \n Escolha uma das Funções Abaixo: \n 1 - Registrar Venda \n 2 - Listar Vendas\n 3 - Vendas de Vendedor Especifico ".encode("utf-8"))
+                conexao.send("[Painel de Vendas] \n Escolha uma das Funções Abaixo: \n 1 - Registrar Venda \n 2 - Listar Vendas".encode("utf-8"))
                 status=msg
                 opcao=conexao.recv(tamanho).decode(padrao)
                 if opcao=='1':
@@ -325,21 +357,25 @@ def conexao( conexao, enderecoCliente):
                 else:
                     conexao.send('opcao invalida'.encode(padrao))
 
-           
+        
         except:
             next
             conectado=False
             conexao.close()
-    
-           
+
+      
+        if stop:
+            break     
 
     conexao.close()
     
 
 def serverReserva(ip,port):
     global sinal
+    global stop
     sinal=False
     ativo=True
+    stop = False
     print("[INICIANDO] O Servidor está Iniciando...")
 
     print(f'IP Local: {ip}')
@@ -354,8 +390,9 @@ def serverReserva(ip,port):
     while a==0: 
         try:
             servidor.bind((HOST,PORT))
-            servidor.listen(1)
+            servidor.listen()
             print(f"[ATIVO] O Servidor está Ativo no: {ip}:{PORT}")
+            
             a=1
         except:
             next
@@ -364,10 +401,13 @@ def serverReserva(ip,port):
         if  sinal:
             SetarIP('secondary', '0.0.0.0','0000', 'inativo')
             ativo=False
+            stop=True
             servidor.close()
+            parar_todas_as_threads()
             break
         conn, endereco=servidor.accept()
-        thread=threading.Thread(target=conexao, args=( conn, endereco) ).start()
+        thread=threading.Thread(target=conexao, args=( conn, endereco) )
+        thread.start()
         print(thread)
         
         print(f"usuarios ativos {threading.active_count()-1} ")
@@ -377,10 +417,16 @@ def serverReserva(ip,port):
             SetarIP('secondary', '0.0.0.0','0000', 'inativo')
             print("[AVISO] O servidor principal está no ar")
             print("Entrando em modo cliente")
+            stop=True
+            thread.join()
             servidor.close()
+            parar_todas_as_threads()
             break
 
-
+def parar_todas_as_threads():
+    for thread in threading.enumerate():
+        if thread != threading.current_thread():
+            thread.join()
 
 def main(ip=None,port=0):
     
