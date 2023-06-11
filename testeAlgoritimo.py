@@ -449,7 +449,7 @@ def main(ip=None,port=0):
             cliente.connect((HOST, PORT))
             mensagem = ""
             primeira = True
-
+            contador = 0
             while mensagem != "fim":
                 
                 if primeira:

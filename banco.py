@@ -10,6 +10,8 @@ def __init__():
         banco = sqlite3.connect(db_path)
         cursor = banco.cursor()
         cursor.execute("CREATE TABLE vendas (vendedor text,valor decimal)")
+        # cursor.execute("CREATE TABLE vendas (vendedor text, loja text, valor decimal, data date)")
+
         cursor.execute("CREATE TABLE conexao (tipo text, ip text,port text, status text)")
         cursor.execute("INSERT INTO conexao VALUES('primary','0.0.0.0','9998', 'inativo')")
         cursor.execute("INSERT INTO conexao VALUES('secondary','1.1.1.1','0000','inativo')")
