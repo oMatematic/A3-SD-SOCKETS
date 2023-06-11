@@ -322,37 +322,38 @@ def conexao( conexao, enderecoCliente):
     conectado=True
     status=""
     opcao=""
+    global sinal
 
-    while conectado and not stop:
+    while conectado and not sinal:
         try:
             msg=conexao.recv(tamanho).decode(padrao)
             if msg=="voltei":
                 
                 conectado=False
                 conexao.close()
-                global sinal
+               
                 sinal=True
             
                 break
-            if msg =="gerente":
+            if msg =="gerente" and not sinal:
                 conexao.sendall("\n\n     [Painel de Gerencia] \n Escolha uma das Funções Abaixo: \n 1 - Listar Vendas \n 2 - Listar Vendedores\n 3 - Vendas de Vendedor Especifico ".encode("utf-8"))
                 status=msg
                 opcao=conexao.recv(tamanho).decode(padrao)
-                if opcao=='1':
+                if opcao=='1' and not sinal:
                     conexao.send('opcao 1'.encode(padrao))
-                elif opcao=='2':
+                elif opcao=='2' and not sinal:
                     conexao.send('opcao 2'.encode(padrao))
                 else:
                     conexao.send('opcao invalida'.encode(padrao))
-            elif msg=="vendedor":
+            elif msg=="vendedor" and not sinal:
                 conexao.send("[Painel de Vendas] \n Escolha uma das Funções Abaixo: \n 1 - Registrar Venda \n 2 - Listar Vendas".encode("utf-8"))
                 status=msg
                 opcao=conexao.recv(tamanho).decode(padrao)
-                if opcao=='1':
+                if opcao=='1' and not sinal:
                     Vendedor_CadastrarVenda( conexao)
-                elif opcao=='2':
+                elif opcao=='2' and not sinal:
                     Vendedor_ListarVenda(conexao)
-                elif opcao=='3':
+                elif opcao=='3' and not sinal:
                     conexao.send('opcao 3'.encode(padrao))
                 else:
                     conexao.send('opcao invalida'.encode(padrao))

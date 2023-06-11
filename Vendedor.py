@@ -11,14 +11,13 @@ print("Eu sou um CLIENTE 2!")
 # PORT = 9999
 
 
-
 def main():
     contador = 0
     while True:
         redes = ConsultarIps()
         print(redes[0][3])
-        HOST = redes[0][1]
-        PORT = int(redes[0][2])
+        HOST = '192.168.20.105'
+        PORT = 9999
 
         try:
             cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
