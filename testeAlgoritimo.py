@@ -16,7 +16,8 @@ opc_sair = "!SAIR"
 global sinal
 sinal=False
 global stop
-
+global port
+port=  None
 
 
 def IniciarEleicao():
@@ -42,8 +43,8 @@ def IniciarEleicao():
     except:
         HOST=ip
         PORT=9998
-    # indicacao=int((random.randint(1, 100)*random.randint(1, 100))/random.randint(1, 100))
-    indicacao=10
+    indicacao=int((random.randint(1, 100)*random.randint(1, 100))/random.randint(1, 100))
+    # indicacao=10
     global inicio
     global ProxNo 
     unico=False
@@ -80,13 +81,13 @@ def IniciarEleicao():
                     if PORT==inicio and first:
                         print('sou o primeiro vou mandar meu voto')
                         first=False
-                        ProxNo=enviar_mensagem((HOST,PORT+1), indicacao+2,qtd,inicio,1,PORT)
+                        ProxNo=enviar_mensagem((HOST,PORT+1), indicacao,qtd,inicio,1,PORT)
                         # thread = threading.Thread(target=enviar_mensagem, args=((HOST,PORT+1), indicacao,qtd))
                         # thread.start()
                         
-                        indicacao+=2
+                        
                     if PORT != inicio:
-                        servidor.settimeout(300)
+                        servidor.settimeout(60)
 
                     if i== qtd:
                         PORT-(qtd+1)
@@ -111,7 +112,7 @@ def IniciarEleicao():
                         if  int(msg)<indicacao:
                             if ProxNo=="":
                                 print("meu numero é maior")
-                                ProxNo=enviar_mensagem((HOST,inicio+1), indicacao,qtd,inicio,1,PORT)
+                                ProxNo=enviar_mensagem((HOST,PORT+1), indicacao,qtd,inicio,1,PORT)
                             else:
                                 print("meu numero é maior")
                                 enviar_mensagem((HOST,int(ProxNo)), indicacao,qtd,inicio,2,PORT)
@@ -143,6 +144,7 @@ def IniciarEleicao():
                         msg = re.sub(r"[\'\(\)]", "", msg)
                         NewServer=msg.split(',')
                         print(NewServer)
+                        
                         ip,port=NewServer
                         enviar_aviso(NewServer,qtd,ProxNo,PORT)
                         servidor.close()
@@ -163,10 +165,11 @@ def IniciarEleicao():
     if isHost:
         serverReserva(ip,port)
     else:
-        if port=="":
+        try:
+            main(ip,port)
+        except:
+            print("não consegui participar da eleição")
             main()
-        else:
-         main(ip,port)
     #transmitir mensagem
 
     #aguardar mensagem
@@ -180,12 +183,12 @@ def IniciarEleicao():
 
 
 def enviar_mensagem(no_destino, mensagem,pcs,PortIinicial,operacao, myPort):
-    PORT=myPort+1
-    no_destino=no_destino[0], PORT
+    
     contador=0
     if operacao==1:
         
-     
+        PORT=myPort+1
+        no_destino=no_destino[0], PORT
         for i in range (pcs-1):
             if myPort==(inicio+pcs-1):
                 no_destino=no_destino[0], inicio
@@ -204,8 +207,9 @@ def enviar_mensagem(no_destino, mensagem,pcs,PortIinicial,operacao, myPort):
                     endereco_destino = (no_destino)  # Endereço do próximo nó
                     mensagem_serializada = str(mensagem)
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                        print("[Conectando] Tentando Ancoragem")
+                        print(f"[Conectando] Tentando Ancoragem na porta {no_destino[1]}")
                         s.connect(endereco_destino)
+                        
                         print('[Conectado] Ancorado, vou enviar meu voto')
                         s.sendall(mensagem_serializada.encode(padrao))
                         print('[Enviado] Voto enviado com sucesso!')
@@ -214,7 +218,7 @@ def enviar_mensagem(no_destino, mensagem,pcs,PortIinicial,operacao, myPort):
                             print("Confirmação de voto recebida")
                             return PORT
                 except:
-                    time.sleep(1)
+                   
                     print(f"[ERRO] Porta {no_destino[1]} sem resposta, tentando Novamente")
 
                     contador+=1
@@ -243,7 +247,7 @@ def enviar_mensagem(no_destino, mensagem,pcs,PortIinicial,operacao, myPort):
                     endereco_destino = (no_destino)  # Endereço do próximo nó
                     mensagem_serializada = str(mensagem)
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                        print("[Conectando] Tentando Ancoragem")
+                        print(f"[Conectando] Tentando Ancoragem  na porta {no_destino[1]}")
                         s.connect(endereco_destino)
                         print('[Conectado] Ancorado, vou enviar meu voto')
                         s.sendall(mensagem_serializada.encode(padrao))
@@ -251,7 +255,7 @@ def enviar_mensagem(no_destino, mensagem,pcs,PortIinicial,operacao, myPort):
                         resposta=s.recv(1024).decode(padrao)
                         if resposta=="ok":
                             print("Confirmação de voto recebida")
-                            return PORT
+                            return None
                 except:
                     time.sleep(1)
                     print(f"[ERRO] Porta {no_destino[1]} sem resposta, tentando Novamente")
@@ -316,59 +320,56 @@ def enviar_aviso(servidor,pcs,proxNo,myport):
 
 
 
-def conexao( conexao, enderecoCliente):
+tamanho = 1024
+padrao = ("utf-8")
+opc_sair = "!SAIR"
+
+
+def conexao(conexao, enderecoCliente):
 
     print(f"[NOVO USUARIO CONECTADO] {enderecoCliente} conectou.")
-    conectado=True
-    status=""
-    opcao=""
-    global sinal
-
-    while conectado and not sinal:
+    conectado = True
+    status = ""
+    opcao = ""
+    while conectado:
         try:
-            msg=conexao.recv(tamanho).decode(padrao)
-            if msg=="voltei":
-                
-                conectado=False
-                conexao.close()
-               
-                sinal=True
-            
-                break
-            if msg =="gerente" and not sinal:
-                conexao.sendall("\n\n     [Painel de Gerencia] \n Escolha uma das Funções Abaixo: \n 1 - Listar Vendas \n 2 - Listar Vendedores\n 3 - Vendas de Vendedor Especifico ".encode("utf-8"))
-                status=msg
-                opcao=conexao.recv(tamanho).decode(padrao)
-                if opcao=='1' and not sinal:
-                    conexao.send('opcao 1'.encode(padrao))
-                elif opcao=='2' and not sinal:
-                    conexao.send('opcao 2'.encode(padrao))
+            msg = conexao.recv(tamanho).decode(padrao)
+            if msg == "gerente":
+                conexao.sendall(
+                    "[Painel de Gerencia] \n Escolha uma das Funções Abaixo: \n 1 - Cadastrar Vendedores \n 2 - Cadastrar Lojas\n 3 - Vendas de uma Loja\n 4 - Vendas Por Periodo\n 5 - Melhor Vendedor\n 6 - Melhor Loja ".encode(padrao))
+                status = msg
+                opcao = conexao.recv(tamanho).decode(padrao)
+                if opcao == '1':
+                    CadastrarVendedor(conexao)
+                elif opcao == '2':
+                    cadastroDeLoja(conexao)
+                elif opcao == '3':
+                    vendasDeUmaLoja(conexao)
+                elif opcao=="4":
+                    vendasPorPeriodo(conexao)
+                elif opcao=="5":
+                    melhorVendedor(conexao)
+                elif opcao=="6":
+                    melhorLoja(conexao)
                 else:
                     conexao.send('opcao invalida'.encode(padrao))
-            elif msg=="vendedor" and not sinal:
-                conexao.send("[Painel de Vendas] \n Escolha uma das Funções Abaixo: \n 1 - Registrar Venda \n 2 - Listar Vendas".encode("utf-8"))
-                status=msg
-                opcao=conexao.recv(tamanho).decode(padrao)
-                if opcao=='1' and not sinal:
-                    Vendedor_CadastrarVenda( conexao)
-                elif opcao=='2' and not sinal:
+            elif msg == "vendedor":
+                conexao.send(
+                    "\n [       Painel de Vendas       ] \n Escolha uma das Funções Abaixo: \n 1 - Registrar Venda \n 2 - Listar Vendas".encode("utf-8"))
+                status = msg
+                opcao = conexao.recv(tamanho).decode(padrao)
+                if opcao == '1':
+                    Vendedor_CadastrarVenda(conexao)
+                elif opcao == '2':
                     Vendedor_ListarVenda(conexao)
-                elif opcao=='3' and not sinal:
-                    conexao.send('opcao 3'.encode(padrao))
                 else:
-                    conexao.send('opcao invalida'.encode(padrao))
+                    conexao.send('Opção inválida'.encode(padrao))
 
-        
         except:
             next
-            conectado=False
+            conectado = False
+        finally:
             conexao.close()
-
-      
-        if stop:
-            break     
-
-    conexao.close()
     
 
 def serverReserva(ip,port):
@@ -470,6 +471,8 @@ def main(ip=None,port=0):
                         
                         print("... >>> O servidor me respondeu:", resposta.decode("utf-8"))
                         mensagem = input("Mensagem > ")
+                        if mensagem=="":
+                            mensagem="invalido"
                         cliente.sendall(mensagem.encode("utf-8"))
                         resposta = cliente.recv(1024)
                   
