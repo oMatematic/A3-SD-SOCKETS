@@ -47,6 +47,8 @@ def main():
                         
                         print("... >>> O servidor me respondeu:", resposta.decode("utf-8"))
                         mensagem = input("Mensagem > ")
+                        if mensagem=="":
+                            mensagem="invalido"
                         cliente.sendall(mensagem.encode("utf-8"))
                         resposta = cliente.recv(1024)
                   
@@ -57,7 +59,7 @@ def main():
         except:
             print('Servidor indisponível')
             print('Tentando novamente em alguns segundos')
-            time.sleep(5)
+            
             contador += 1
 
         if contador > 2:

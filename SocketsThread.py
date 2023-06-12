@@ -4,7 +4,7 @@ from banco import *
 import time
 from funcoes import *
 
-time.sleep(5)
+
 
 tamanho = 1024
 padrao = ("utf-8")
@@ -22,15 +22,21 @@ def conexao(conexao, enderecoCliente):
             msg = conexao.recv(tamanho).decode(padrao)
             if msg == "gerente":
                 conexao.sendall(
-                    "[Painel de Gerencia] \n Escolha uma das Funções Abaixo: \n 1 - Listar Vendas \n 2 - Listar Vendedores\n 3 - Vendas de Vendedor Especifico ".encode(padrao))
+                    "[Painel de Gerencia] \n Escolha uma das Funções Abaixo: \n 1 - Cadastrar Vendedores \n 2 - Cadastrar Lojas\n 3 - Vendas de uma Loja\n 4 - Vendas Por Periodo\n 5 - Melhor Vendedor\n 6 - Melhor Loja ".encode(padrao))
                 status = msg
                 opcao = conexao.recv(tamanho).decode(padrao)
                 if opcao == '1':
-                    Vendedor_ListarVenda(conexao)
+                    CadastrarVendedor(conexao)
                 elif opcao == '2':
-                    conexao.send('opcao 2'.encode(padrao))
+                    cadastroDeLoja(conexao)
                 elif opcao == '3':
-                    conexao.send('opcao 3'.encode(padrao))
+                    vendasDeUmaLoja(conexao)
+                elif opcao=="4":
+                    vendasPorPeriodo(conexao)
+                elif opcao=="5":
+                    melhorVendedor(conexao)
+                elif opcao=="6":
+                    melhorLoja(conexao)
                 else:
                     conexao.send('opcao invalida'.encode(padrao))
             elif msg == "vendedor":
@@ -70,12 +76,15 @@ def enviar_ordem(host,port):
 def main():
 
     redes = ConsultarIps()
-    if  redes[0][0] == 'secondary':
-        print(redes[0][3])
-        HOST = redes[0][1]
-        PORT = int(redes[0][2])
-        print(ConsultarIps())
-        enviar_ordem(HOST,PORT)
+    try:
+        if  redes[0][0] == 'secondary':
+            print(redes[0][3])
+            HOST = redes[0][1]
+            PORT = int(redes[0][2])
+            print(ConsultarIps())
+            enviar_ordem(HOST,PORT)
+    except:
+        next
 
     print("[INICIANDO] O Servidor está Iniciando...")
     ip_local = socket.gethostbyname(socket.gethostname())
