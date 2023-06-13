@@ -3,13 +3,14 @@ import time
 import random
 import socket
 import threading
-from banco import *
 import time
 from funcoes import *
 import re
+
 tamanho = 1024
 padrao = "utf-8"
 opc_sair = "!SAIR"
+
 
 
 global sinal
@@ -23,11 +24,21 @@ def IniciarEleicao():
     #carregar ips
     NumPCs = 'NumPCs.txt'
     ipRede='IpRede.txt'
-    with open(ipRede, 'r') as arquivo:
-        ip = arquivo.read()
-    with open(NumPCs, 'r') as arquivo:
-        qtd = int(arquivo.read())
-    print(qtd)
+    try:
+        with open(ipRede, 'r') as arquivo:
+            ip = arquivo.read()
+    except:
+        ip="localhost"
+        with open(ipRede, "w") as arquivo:
+            arquivo.write(ip)
+            
+    try:
+        with open(NumPCs, 'r') as arquivo:
+            qtd = int(arquivo.read())
+    except:
+        qtd=8
+        with open(NumPCs, "w") as arquivo:
+            arquivo.write(str(qtd))   
     
     #gerar base do servidor
     try:
@@ -76,22 +87,28 @@ def IniciarEleicao():
                         print('sou o primeiro vou mandar meu voto')
                         first=False
                         ProxNo=enviar_mensagem((HOST,PORT+1), indicacao,qtd,inicio,1,PORT)
-                      
+                        servidor.settimeout(90)
                         
                         
                     if PORT != inicio:
-                        servidor.settimeout(60)
+                        servidor.settimeout(90)
                     if i== qtd:
                         PORT-(qtd+1)
                     
                     if ProxNo == endereco_destino[1]:
-                        print("[AVISO] Sou o unico na eleição")
-                        ip,port=endereco_destino
-                        SetarIP('secondary',ip,str(port),'ativo')
-                        conectado=False
-                        isHost=True
-                        servidor.close()
-                        break
+                        if not ping():
+                            print("[AVISO] Sou o unico na eleição")
+                            ip,port=endereco_destino
+                            SetarIP('secondary',ip,str(port),'ativo')
+                            conectado=False
+                            isHost=True
+                            servidor.close()
+                            break
+                        else:
+                            print("[AVISO] Eleição cancelada Servidor Principal no Ar")
+                            conectado=False
+                            servidor.close()
+                            break
                     else:
                         conn, endereco = servidor.accept()
                         print(endereco)
@@ -108,20 +125,25 @@ def IniciarEleicao():
                                 print("meu numero é maior")
                                 enviar_mensagem((HOST,int(ProxNo)), indicacao,qtd,inicio,2,PORT)
                         elif int(msg)==indicacao:
-                            enviar_aviso(endereco_destino,qtd,ProxNo,PORT)
-                            ip,port=endereco_destino
-                            SetarIP('secondary',ip,str(port),'ativo')
-                            conectado=False
-                            isHost=True
-                            conn.close()
-                            servidor.close()
-                            break
+                            if not ping():
+                                enviar_aviso(endereco_destino,qtd,ProxNo,PORT)
+                                ip,port=endereco_destino
+                                SetarIP('secondary',ip,str(port),'ativo')
+                                conectado=False
+                                isHost=True
+                                conn.close()
+                                servidor.close()
+                                break
+                            else:
+                                print("[AVISO] Eleição cancelada Servidor Principal no Ar")
+                                conectado=False
+                                servidor.close()
+                                break
                         else:
                             if ProxNo=="": 
                                 print("meu numero é menor")
                                 ProxNo=enviar_mensagem((HOST,inicio+1), msg,qtd,inicio,1,PORT)
-                            # thread = threading.Thread(target=enviar_mensagem, args=((HOST,PORT+1), indicacao,qtd))
-                            # thread.start()
+                            
                             else:
                                 print("meu numero é menor")
                                 enviar_mensagem((HOST,ProxNo), msg,qtd,inicio,2,PORT)
@@ -156,13 +178,8 @@ def IniciarEleicao():
         try:
             main(ip,port)
         except:
-            print("não consegui participar da eleição")
             main()
-    #transmitir mensagem
-    #aguardar mensagem
-    #verificar id
-    #se for o meu id iniciar servidor
-    #se nao for meu id agardar e logar de novo
+   
 def enviar_mensagem(no_destino, mensagem,pcs,PortIinicial,operacao, myPort):
     
     contador=0
@@ -289,9 +306,7 @@ def enviar_aviso(servidor,pcs,proxNo,myport):
             
             next
 
-tamanho = 1024
-padrao = ("utf-8")
-opc_sair = "!SAIR"
+
 
 
 def conexao( conexao, enderecoCliente):
@@ -418,10 +433,10 @@ def main(ip=None,port=0):
             mensagem = ""
             primeira = True
             while mensagem != "fim":
-                
+                contador = 0
                 if primeira:
                     print("...Iniciando interação com o Servidor")
-                    cliente.sendall("vendedor".encode("utf-8"))
+                    cliente.sendall("gerente".encode("utf-8"))
                     primeira = False
                     resposta = cliente.recv(1024)
                 else:
@@ -437,7 +452,6 @@ def main(ip=None,port=0):
                         
                         print("... >>> O servidor me respondeu:", resposta.decode("utf-8"))
                         mensagem = input("Mensagem > ")
-                        cliente.sendall(mensagem.encode("utf-8"))
                         if mensagem=="":
                             mensagem="invalido"
                         cliente.sendall(mensagem.encode("utf-8"))
@@ -460,5 +474,20 @@ def main(ip=None,port=0):
             IniciarEleicao()
             if sinal:
                 contador=0
+
+def ping():
+    try:
+        redes = ConsultarIps()
+        print(redes[0][3])
+        HOST = redes[0][1]
+        PORT = int(redes[0][2])
+        cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        resultado=cliente.connect((HOST, PORT))
+        return True
+    except:
+        return False
+
+
+
 if __name__ == "__main__":
     main()

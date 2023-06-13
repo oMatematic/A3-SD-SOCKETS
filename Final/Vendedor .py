@@ -3,7 +3,6 @@ import time
 import random
 import socket
 import threading
-from banco import *
 import time
 from funcoes import *
 import re
@@ -11,6 +10,7 @@ tamanho = 1024
 padrao = "utf-8"
 opc_sair = "!SAIR"
 
+bd=Banco()
 
 global sinal
 sinal=False
@@ -23,15 +23,25 @@ def IniciarEleicao():
     #carregar ips
     NumPCs = 'NumPCs.txt'
     ipRede='IpRede.txt'
-    with open(ipRede, 'r') as arquivo:
-        ip = arquivo.read()
-    with open(NumPCs, 'r') as arquivo:
-        qtd = int(arquivo.read())
-    print(qtd)
+    try:
+        with open(ipRede, 'r') as arquivo:
+            ip = arquivo.read()
+    except:
+        ip="localhost"
+        with open(ipRede, "w") as arquivo:
+            arquivo.write(ip)
+            
+    try:
+        with open(NumPCs, 'r') as arquivo:
+            qtd = int(arquivo.read())
+    except:
+        qtd=8
+        with open(NumPCs, "w") as arquivo:
+            arquivo.write(str(qtd))   
     
     #gerar base do servidor
     try:
-        redes = ConsultarIps()
+        redes = bd.ConsultarIps()
         print(redes[0][3])
         HOST = redes[0][1]
         PORT =  int(redes[0][2])
@@ -76,22 +86,28 @@ def IniciarEleicao():
                         print('sou o primeiro vou mandar meu voto')
                         first=False
                         ProxNo=enviar_mensagem((HOST,PORT+1), indicacao,qtd,inicio,1,PORT)
-                      
+                        servidor.settimeout(90)
                         
                         
                     if PORT != inicio:
-                        servidor.settimeout(60)
+                        servidor.settimeout(90)
                     if i== qtd:
                         PORT-(qtd+1)
                     
                     if ProxNo == endereco_destino[1]:
-                        print("[AVISO] Sou o unico na eleição")
-                        ip,port=endereco_destino
-                        SetarIP('secondary',ip,str(port),'ativo')
-                        conectado=False
-                        isHost=True
-                        servidor.close()
-                        break
+                        if not ping():
+                            print("[AVISO] Sou o unico na eleição")
+                            ip,port=endereco_destino
+                            bd.SetarIP('secondary',ip,str(port),'ativo')
+                            conectado=False
+                            isHost=True
+                            servidor.close()
+                            break
+                        else:
+                            print("[AVISO] Eleição cancelada Servidor Principal no Ar")
+                            conectado=False
+                            servidor.close()
+                            break
                     else:
                         conn, endereco = servidor.accept()
                         print(endereco)
@@ -108,14 +124,20 @@ def IniciarEleicao():
                                 print("meu numero é maior")
                                 enviar_mensagem((HOST,int(ProxNo)), indicacao,qtd,inicio,2,PORT)
                         elif int(msg)==indicacao:
-                            enviar_aviso(endereco_destino,qtd,ProxNo,PORT)
-                            ip,port=endereco_destino
-                            SetarIP('secondary',ip,str(port),'ativo')
-                            conectado=False
-                            isHost=True
-                            conn.close()
-                            servidor.close()
-                            break
+                            if not ping():
+                                enviar_aviso(endereco_destino,qtd,ProxNo,PORT)
+                                ip,port=endereco_destino
+                                bd.SetarIP('secondary',ip,str(port),'ativo')
+                                conectado=False
+                                isHost=True
+                                conn.close()
+                                servidor.close()
+                                break
+                            else:
+                                print("[AVISO] Eleição cancelada Servidor Principal no Ar")
+                                conectado=False
+                                servidor.close()
+                                break
                         else:
                             if ProxNo=="": 
                                 print("meu numero é menor")
@@ -156,7 +178,7 @@ def IniciarEleicao():
         try:
             main(ip,port)
         except:
-            print("não consegui participar da eleição")
+           
             main()
     #transmitir mensagem
     #aguardar mensagem
@@ -289,9 +311,7 @@ def enviar_aviso(servidor,pcs,proxNo,myport):
             
             next
 
-tamanho = 1024
-padrao = ("utf-8")
-opc_sair = "!SAIR"
+
 
 
 def conexao( conexao, enderecoCliente):
@@ -313,25 +333,39 @@ def conexao( conexao, enderecoCliente):
 
                 break
             if msg =="gerente" and not sinal:
-                conexao.sendall("\n\n     [Painel de Gerencia] \n Escolha uma das Funções Abaixo: \n 1 - Listar Vendas \n 2 - Listar Vendedores\n 3 - Vendas de Vendedor Especifico ".encode("utf-8"))
+                conexao.sendall(
+                    """[Painel de Gerencia] \n Escolha uma das Funções Abaixo:
+                      \n 1 - Cadastrar Vendedores 
+                      \n 2 - Cadastrar Lojas
+                      \n 3 - Vendas de uma Loja
+                      \n 4 - Vendas Por Periodo
+                      \n 5 - Melhor Vendedor
+                      \n 6 - Melhor Loja """.encode(padrao))
                 status=msg
                 opcao=conexao.recv(tamanho).decode(padrao)
-                if opcao=='1' and not sinal:
-                    conexao.send('opcao 1'.encode(padrao))
-                elif opcao=='2' and not sinal:
-                    conexao.send('opcao 2'.encode(padrao))
+                if opcao == '1' and not sinal:
+                    CadastrarVendedor(conexao)
+                elif opcao == '2' and not sinal:
+                    cadastroDeLoja(conexao)
+                elif opcao == '3' and not sinal:
+                    vendasDeUmaLoja(conexao)
+                elif opcao=="4" and not sinal:
+                    vendasPorPeriodo(conexao)
+                elif opcao=="5" and not sinal:
+                    melhorVendedor(conexao)
+                elif opcao=="6" and not sinal:
+                    melhorLoja(conexao)
                 else:
                     conexao.send('opcao invalida'.encode(padrao))
             elif msg=="vendedor" and not sinal:
-                conexao.send("[Painel de Vendas] \n Escolha uma das Funções Abaixo: \n 1 - Registrar Venda \n 2 - Listar Vendas".encode("utf-8"))
+                conexao.send("""[Painel de Vendas] \n Escolha uma das Funções Abaixo: 
+                \n 1 - Registrar Venda """.encode("utf-8"))
                 status=msg
                 opcao=conexao.recv(tamanho).decode(padrao)
                 if opcao=='1' and not sinal:
                     Vendedor_CadastrarVenda( conexao)
-                elif opcao=='2' and not sinal:
-                    Vendedor_ListarVenda(conexao)
-                elif opcao=='3' and not sinal:
-                    conexao.send('opcao 3'.encode(padrao))
+                
+        
                 else:
                     conexao.send('opcao invalida'.encode(padrao))
         
@@ -353,8 +387,8 @@ def serverReserva(ip,port):
     print("[INICIANDO] O Servidor está Iniciando...")
     print(f'IP Local: {ip}')
     print('seu ip local será usado para ancoragem do servidor atual')
-    SetarIP('primary','0.0.0.0','9998','inativo')
-    print(ConsultarIps())
+    bd.SetarIP('primary','0.0.0.0','9998','inativo')
+    print(bd.ConsultarIps())
     HOST = ip        # Endereco IP do Servidor
     PORT = port          # Porta que o Servidor esta
     servidor = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -370,7 +404,7 @@ def serverReserva(ip,port):
             next
     while ativo:
         if  sinal:
-            SetarIP('secondary', '0.0.0.0','0000', 'inativo')
+            bd.SetarIP('secondary', '0.0.0.0','0000', 'inativo')
             ativo=False
             stop=True
             servidor.close()
@@ -385,7 +419,7 @@ def serverReserva(ip,port):
         
         if  sinal:
             ativo=False
-            SetarIP('secondary', '0.0.0.0','0000', 'inativo')
+            bd.SetarIP('secondary', '0.0.0.0','0000', 'inativo')
             print("[AVISO] O servidor principal está no ar")
             print("Entrando em modo cliente")
             stop=True
@@ -408,7 +442,7 @@ def main(ip=None,port=0):
                 HOST=ip.replace("'", "").replace(")", "")
                 PORT=int(port)
             else:
-                redes = ConsultarIps()
+                redes = bd.ConsultarIps()
                 print(redes[0][3])
                 HOST = redes[0][1]
                 PORT = int(redes[0][2])
@@ -460,5 +494,20 @@ def main(ip=None,port=0):
             IniciarEleicao()
             if sinal:
                 contador=0
+
+def ping():
+    try:
+        redes = bd.ConsultarIps()
+        print(redes[0][3])
+        HOST = redes[0][1]
+        PORT = int(redes[0][2])
+        cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        resultado=cliente.connect((HOST, PORT))
+        return True
+    except:
+        return False
+
+
+
 if __name__ == "__main__":
     main()

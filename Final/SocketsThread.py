@@ -5,7 +5,6 @@ import time
 from funcoes import *
 
 
-
 tamanho = 1024
 padrao = ("utf-8")
 opc_sair = "!SAIR"
@@ -77,7 +76,7 @@ def enviar_ordem(host,port):
             
 def main():
 
-    redes = ConsultarIps()
+    redes =ConsultarIps()
     try:
         if  redes[0][0] == 'secondary':
             print(redes[0][3])
@@ -98,6 +97,7 @@ def main():
 
     HOST = ip_local        # Endereco IP do Servidor
     PORT = 9998            # Porta que o Servidor esta
+    
     servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     servidor.bind((HOST, PORT))
     servidor.listen(1)
@@ -120,78 +120,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# import socket
-# import _thread
-# from banco import *
-# import time
-
-# time.sleep(5)
-
-
-# print("Eu sou o SERVIDOR TCP!")
-# ip_local = socket.gethostbyname(socket.gethostname())
-# print(f'IP Local: {ip_local}')
-# print('seu ip local será usado para ancoragem do servidor atual')
-# SetarIP('primary',ip_local,'ativo')
-# print(ConsultarIps())
-
-# HOST = ip_local        # Endereco IP do Servidor
-# PORT = 5000            # Porta que o Servidor esta
-
-
-# def Funcoes_disponiveis(num):
-#     match num:
-#         case 0:
-#             return "zero"
-#         case 1:
-#             return "one"
-#         case 2:
-#             return "two"
-#         case default:
-#             return "something"
-# def Vendedor_CadastrarVenda(con,conexaoCliente):
-#     conexaoCliente.sendall("Informe Seu nome".encode("utf-8"))
-#     nome=con.recv(1024);
-#     print(nome)
-#     naoNum=True
-#     while (naoNum):
-#         conexaoCliente.sendall("Informe Valor da Venda".encode("utf-8"))
-#         try:
-#             valor=float(con.recv(1024));
-#             naoNum=False
-#             print(valor)
-#         except:
-#              conexaoCliente.sendall("Erro! insira uma configuração de moeda válida. Ex: 19.00".encode("utf-8"))
-
-
-# def conectado(con, cliente):
-#     print ('Conectado por', cliente)
-#     i=0
-#     while True:
-#         conexaoCliente.sendall("Bem vindo ao caixa tem".encode("utf-8"))
-#         conexaoCliente.sendall("escolha uma das opções 1 2".encode("utf-8"))
-#         msg = con.recv(1024)
-
-#         if not msg: break
-#         if int(msg)==1:
-#             Vendedor_CadastrarVenda(con,conexaoCliente)
-
-
-#     print ('Finalizando conexao do cliente'), cliente
-#     con.close()
-#     _thread.exit()
-
-# servidor = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-# servidor.bind((HOST,PORT))
-# servidor.listen(1)
-# print("Aguardando cliente...")
-
-# while (True):
-#     conexaoCliente, enderecoCliente = servidor.accept()
-#     _thread.start_new_thread(conectado, tuple([conexaoCliente, enderecoCliente]))
-
-
-# # mensagem de encerramento
-# print("Servidor encerrado.")
