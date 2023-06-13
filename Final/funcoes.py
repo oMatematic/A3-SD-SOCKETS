@@ -211,7 +211,7 @@ def CadastrarVendedor(con):
                 semLoja=False
 
         if buscarVendedor(cpf)!= None:
-                con.send(f"Erro! o Vendedor {nome} Já está cadastrado" .encode("utf-8"))
+                con.send(f"Erro! Já possui um vendedor cadastrado Com esse CPF" .encode("utf-8"))
                 time.sleep(3)
                 
         else:

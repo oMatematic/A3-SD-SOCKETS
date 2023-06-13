@@ -5,10 +5,10 @@ from datetime import datetime
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(BASE_DIR, "referencias.db")
 
+
 def __init__():
     try:
 
-        
         banco = sqlite3.connect(db_path)
         cursor = banco.cursor()
 
@@ -56,19 +56,21 @@ def __init__():
     except:
         next
 
+
 def SetarIP(tipo, ip, port, status):
-    
+
     banco = sqlite3.connect(db_path)
     cursor = banco.cursor()
     cursor.execute("UPDATE conexao SET ip ='"+ip+"' , port= '" +
-                    port+"' , status= '"+status+"' where tipo='"+tipo+"' ")
+                   port+"' , status= '"+status+"' where tipo='"+tipo+"' ")
     banco.commit()
     cursor.close()
     banco.close()
 
+
 def ConsultarIps():
     ips = []
-    
+
     banco = sqlite3.connect(db_path)
     cursor = banco.cursor()
     cursor.execute("select * from conexao where status ='ativo' ")
@@ -79,9 +81,10 @@ def ConsultarIps():
     banco.close()
     return ips
 
+
 def CadastrarVenda(vendedor, valor, idloja, data):
     try:
-        
+
         banco = sqlite3.connect(db_path)
         cursor = banco.cursor()
         cursor.execute(
@@ -94,8 +97,8 @@ def CadastrarVenda(vendedor, valor, idloja, data):
         return "Venda Salva com sucesso! fim"
     except Exception as erro:
 
-        
         return "Falha ao Salvar venda! fim"
+
 
 def ListarVendas(vendedor):
     vendas = 'Vendedor não encontrado'
@@ -109,6 +112,7 @@ def ListarVendas(vendedor):
     banco.close()
     return vendas
 
+
 def cadastrarLoja(nome, cep, numero, cidade, estado):
     try:
         banco = sqlite3.connect(db_path)
@@ -116,14 +120,15 @@ def cadastrarLoja(nome, cep, numero, cidade, estado):
         cursor.execute("""
             INSERT INTO loja (nome, cep,numero, cidade, estado)
             VALUES (?, ?, ?, ?, ?)
-        """, (nome, cep, numero,cidade, estado))
+        """, (nome, cep, numero, cidade, estado))
         banco.commit()
         cursor.close()
         banco.close()
         return True
     except Exception as e:
-      return False
-    
+        return False
+
+
 def cadastrarFuncionario(nome, cpf, data_contratacao, id_loja):
     try:
         banco = sqlite3.connect(db_path)
@@ -131,16 +136,14 @@ def cadastrarFuncionario(nome, cpf, data_contratacao, id_loja):
         cursor.execute("""
             INSERT INTO vendedor (nome_completo, cpf,data_contratacao, id_loja)
             VALUES (?, ?, ?, ?)
-        """, (nome, cpf, data_contratacao,id_loja))
+        """, (nome, cpf, data_contratacao, id_loja))
         banco.commit()
         cursor.close()
         banco.close()
         return True
     except Exception as e:
-      print(e)
-      return False
-
-
+        print(e)
+        return False
 
 
 def buscarLoja(nome, cep, numero):
@@ -154,12 +157,12 @@ def buscarLoja(nome, cep, numero):
     banco.commit()
     cursor.close()
     banco.close()
-    
-   
+
     return resultados
 
+
 def listarTodasLojas():
-    
+
     banco = sqlite3.connect(db_path)
     cursor = banco.cursor()
     cursor.execute("""
@@ -169,8 +172,9 @@ def listarTodasLojas():
     banco.commit()
     cursor.close()
     banco.close()
-   
+
     return lojas
+
 
 def buscarVendedor(cpf):
 
@@ -183,7 +187,7 @@ def buscarVendedor(cpf):
     banco.commit()
     cursor.close()
     banco.close()
-   
+
     return resultado
 
 
@@ -196,19 +200,20 @@ def ListarVendasUmaLoja(id):
     vendas = cursor.fetchone()
     cursor.execute(
         "select nome from loja where id ='"+id+"' ")
-    nome=cursor.fetchone()
+    nome = cursor.fetchone()
     banco.commit()
     cursor.close()
     banco.close()
     return vendas, nome
 
-def buscarPorPeriodo(id_loja, inicio,fim):
+
+def buscarPorPeriodo(id_loja, inicio, fim):
     banco = sqlite3.connect(db_path)
     cursor = banco.cursor()
-    cursor.execute( """
+    cursor.execute("""
         SELECT SUM(valor) AS total_vendas
         FROM vendas
-        WHERE id_loja = ? AND strftime('%Y-%m-%d', data) BETWEEN ? AND ?""",(id_loja, inicio, fim))
+        WHERE id_loja = ? AND strftime('%Y-%m-%d', data) BETWEEN ? AND ?""", (id_loja, inicio, fim))
 
     resultado = cursor.fetchone()
     total_vendas = resultado[0] if resultado else 0
@@ -228,13 +233,14 @@ def buscarMelhorVendedor():
                 LIMIT 1""")
         resultado = cursor.fetchone()
         total_vendas = resultado[1] if resultado else 0
-        nome=resultado[0]
-        return total_vendas , nome
+        nome = resultado[0]
+        return total_vendas, nome
 
     except Exception as e:
-        total_vendas=None
-        nome=None
-        return total_vendas , nome
+        total_vendas = None
+        nome = None
+        return total_vendas, nome
+
 
 def buscarMelhorLoja():
     try:
@@ -249,14 +255,13 @@ def buscarMelhorLoja():
                 LIMIT 1""")
         resultado = cursor.fetchone()
         total_vendas = resultado[1] if resultado else 0
-        nome=resultado[0]
-        return total_vendas , nome
+        nome = resultado[0]
+        return total_vendas, nome
 
     except Exception as e:
-        total_vendas=None
-        nome=None
-        return total_vendas , nome
+        total_vendas = None
+        nome = None
+        return total_vendas, nome
 
-    
 
 __init__()

@@ -312,51 +312,63 @@ def enviar_aviso(servidor,pcs,proxNo,myport):
 def conexao( conexao, enderecoCliente):
     print(f"[NOVO USUARIO CONECTADO] {enderecoCliente} conectou.")
     conectado=True
-    status=""
     opcao=""
     global sinal
 
     while conectado and not sinal:
         try:
-            msg=conexao.recv(tamanho).decode(padrao)
-            if msg=="voltei":
+            msg = conexao.recv(tamanho).decode(padrao)
+            if msg == "voltei":
 
-                conectado=False
+                conectado = False
                 conexao.close()
 
-                sinal=True
+                sinal = True
 
                 break
-            if msg =="gerente" and not sinal:
-                conexao.sendall("\n\n     [Painel de Gerencia] \n Escolha uma das Funções Abaixo: \n 1 - Listar Vendas \n 2 - Listar Vendedores\n 3 - Vendas de Vendedor Especifico ".encode("utf-8"))
-                status=msg
-                opcao=conexao.recv(tamanho).decode(padrao)
-                if opcao=='1' and not sinal:
-                    conexao.send('opcao 1'.encode(padrao))
-                elif opcao=='2' and not sinal:
-                    conexao.send('opcao 2'.encode(padrao))
+            if msg == "gerente" and not sinal:
+                conexao.sendall(
+                    """[Painel de Gerencia] \n Escolha uma das Funções Abaixo:
+                      \n 1 - Cadastrar Vendedores 
+                      \n 2 - Cadastrar Lojas
+                      \n 3 - Vendas de uma Loja
+                      \n 4 - Vendas Por Periodo
+                      \n 5 - Melhor Vendedor
+                      \n 6 - Melhor Loja """.encode(padrao))
+            
+                opcao = conexao.recv(tamanho).decode(padrao)
+                if opcao == '1' and not sinal:
+                    CadastrarVendedor(conexao)
+                elif opcao == '2' and not sinal:
+                    cadastroDeLoja(conexao)
+                elif opcao == '3' and not sinal:
+                    vendasDeUmaLoja(conexao)
+                elif opcao == "4" and not sinal:
+                    vendasPorPeriodo(conexao)
+                elif opcao == "5" and not sinal:
+                    melhorVendedor(conexao)
+                elif opcao == "6" and not sinal:
+                    melhorLoja(conexao)
                 else:
                     conexao.send('opcao invalida'.encode(padrao))
-            elif msg=="vendedor" and not sinal:
-                conexao.send("[Painel de Vendas] \n Escolha uma das Funções Abaixo: \n 1 - Registrar Venda \n 2 - Listar Vendas".encode("utf-8"))
-                status=msg
-                opcao=conexao.recv(tamanho).decode(padrao)
-                if opcao=='1' and not sinal:
-                    Vendedor_CadastrarVenda( conexao)
-                elif opcao=='2' and not sinal:
-                    Vendedor_ListarVenda(conexao)
-                elif opcao=='3' and not sinal:
-                    conexao.send('opcao 3'.encode(padrao))
+            elif msg == "vendedor" and not sinal:
+                conexao.send("""[Painel de Vendas] \n Escolha uma das Funções Abaixo: 
+                \n 1 - Registrar Venda """.encode("utf-8"))
+                status = msg
+                opcao = conexao.recv(tamanho).decode(padrao)
+                if opcao == '1' and not sinal:
+                    Vendedor_CadastrarVenda(conexao)
+
                 else:
                     conexao.send('opcao invalida'.encode(padrao))
-        
+
         except:
             next
-            conectado=False
+            conectado = False
             conexao.close()
-      
+
         if stop:
-            break     
+            break
     conexao.close()
     
 def serverReserva(ip,port):
