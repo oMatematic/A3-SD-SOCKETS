@@ -21,20 +21,31 @@ def conexao(conexao, enderecoCliente):
             msg = conexao.recv(tamanho).decode(padrao)
             if msg == "gerente":
                 conexao.sendall(
-                    "[Painel de Gerencia] \n Escolha uma das Funções Abaixo: \n 1 - Cadastrar Vendedores \n 2 - Cadastrar Lojas\n 3 - Vendas de uma Loja\n 4 - Vendas Por Periodo\n 5 - Melhor Vendedor\n 6 - Melhor Loja ".encode(padrao))
-                status = msg
+                    """[Painel de Gerencia] \n Escolha uma das Funções Abaixo:
+                      \n    1 - Cadastrar Vendedores 
+                      \n    2 - Cadastrar Lojas
+                      \n    3 - Listar Vendas Por Nome
+                      \n    4 - Listar Vendas Por CPF
+                      \n    5 - Vendas de uma Loja
+                      \n    6 - Vendas Por Periodo
+                      \n    7 - Melhor Vendedor
+                      \n    8 - Melhor Loja """.encode(padrao))
                 opcao = conexao.recv(tamanho).decode(padrao)
-                if opcao == '1':
+                if opcao=='1':
                     CadastrarVendedor(conexao)
-                elif opcao == '2':
+                elif opcao=='2':
                     cadastroDeLoja(conexao)
-                elif opcao == '3':
+                elif opcao=='3':
                     vendasDeUmaLoja(conexao)
-                elif opcao=="4":
-                    vendasPorPeriodo(conexao)
-                elif opcao=="5":
-                    melhorVendedor(conexao)
+                elif opcao=='4':
+                    cadastroDeLoja(conexao)
+                elif opcao=='5':
+                    vendasDeUmaLoja(conexao)
                 elif opcao=="6":
+                    vendasPorPeriodo(conexao)
+                elif opcao=="7":
+                    melhorVendedor(conexao)
+                elif opcao=="8":
                     melhorLoja(conexao)
                 else:
                     conexao.send('opcao invalida'.encode(padrao))

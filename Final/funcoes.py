@@ -49,17 +49,13 @@ def Vendedor_CadastrarVenda(con):
 
 def Vendedor_ListarVenda(con):
     con.send("Informe o nome do vendedor".encode("utf-8"))
-    nome = str(con.recv(1024).decode("utf-8"))
-    print(type(nome))
-    nome = nome[1:]
-    nome = re.sub("[']", '', nome)
-
+    nome = str(con.recv(1024).decode("utf-8")).upper()
     print(nome)
     vendas = ListarVendas(nome)
     if vendas[0]==None:
         resposta="Vendedor não encontrado!"
     else:
-        resposta = (f"O valor total de vendas de {nome} foi de R$ {vendas[0]:.2f}")
+        resposta = (f"O valor total de vendas de [{nome}] foi de R$ {vendas[0]:.2f}")
     con.send(resposta.encode("utf-8"))
     con.send('fim'.encode("utf-8"))
 
@@ -128,17 +124,17 @@ def cadastroDeLoja(con):
             except:
                 next
         if buscarLoja(nome,cep,numero)!= None:
-            con.send(f"Erro! a Empresa {nome} Já foi Cadastrada" .encode("utf-8"))
+            con.send(f"Erro! a Empresa [{nome}] Já foi Cadastrada" .encode("utf-8"))
             time.sleep(3)
             fim=True
         else:
             resposta=cadastrarLoja(nome,cep,numero,dados['localidade'],dados['uf'])
             if resposta:
-                con.send(f" a Empresa {nome} foi Cadastrada Com Sucesso" .encode("utf-8"))
+                con.send(f" a Empresa [{nome}] foi Cadastrada Com Sucesso" .encode("utf-8"))
                 time.sleep(3)
                 fim=True
             else:
-                con.send(f"Erro! ao cadastrar a Empresa {nome}, Tente novamente mais tarde" .encode("utf-8"))
+                con.send(f"Erro! ao cadastrar a Empresa [{nome}], Tente novamente mais tarde" .encode("utf-8"))
                 time.sleep(3)
                 fim=True
     con.send('fim'.encode("utf-8"))
@@ -217,11 +213,11 @@ def CadastrarVendedor(con):
         else:
                 resposta=cadastrarFuncionario(nome, cpf, data_contratacao, loja)
                 if resposta:
-                    con.send(f" {nome} foi Cadastrada Com Sucesso" .encode("utf-8"))
+                    con.send(f" [{nome}] foi Cadastrada Com Sucesso" .encode("utf-8"))
                     time.sleep(3)
                 
                 else:
-                    con.send(f"Erro! ao cadastrar Vendedor(a) {nome}, Tente novamente mais tarde" .encode("utf-8"))
+                    con.send(f"Erro! ao cadastrar Vendedor(a) [{nome}], Tente novamente mais tarde" .encode("utf-8"))
                     time.sleep(3)
                     fim=True
     con.send('fim'.encode("utf-8"))
@@ -308,7 +304,7 @@ def melhorVendedor(con):
     if msg==None:
         msg=("Não houve melhor vendedor!")
     else:
-        msg=(f"{nome} foi o melhor vendedor de toda a rede Com {msg:.2f}")
+        msg=(f"[{nome}] foi o melhor vendedor de toda a rede Com R$: {msg:.2f}")
     con.send(msg.encode("utf-8"))
     time.sleep(10)
     con.send('fim'.encode("utf-8"))
@@ -320,16 +316,11 @@ def melhorLoja(con):
     if msg==None:
         msg=("Não houve melhor Loja!")
     else:
-        msg=(f"{nome} foi a melhor Loja de toda a rede Com {msg:.2f}")
+        msg=(f"[{nome}] foi a melhor Loja de toda a rede Com R$: {msg:.2f}")
     con.send(msg.encode("utf-8"))
     time.sleep(10)
     con.send('fim'.encode("utf-8"))
-## Funções de Apoio 
 
-# def (saida):
-#     saida = saida[1:]
-#     saida = re.sub("[']", '', saida)
-#     return saida
 
 def tem_letra(string):
     for caractere in string:

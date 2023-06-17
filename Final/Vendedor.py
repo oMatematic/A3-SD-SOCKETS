@@ -149,6 +149,8 @@ def IniciarEleicao():
                                 enviar_mensagem((HOST,ProxNo), msg,qtd,inicio,2,PORT)
                     except:
                         conn.close()
+                       
+                        
                         print("eleicao encerrada")
                         print('Caminho do novo servidor', msg)
                         msg = re.sub(r"[\'\(\)]", "", msg)
@@ -446,7 +448,7 @@ def main(ip=None,port=0):
                 contador = 0
                 if primeira:
                     print("...Iniciando interação com o Servidor")
-                    cliente.sendall("gerente".encode("utf-8"))
+                    cliente.sendall("vendedor".encode("utf-8"))
                     primeira = False
                     resposta = cliente.recv(1024)
                 else:
